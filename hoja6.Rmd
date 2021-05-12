@@ -1,0 +1,211 @@
+---
+title: "Hoja 6 de problemas y prácticas con R"
+subtitle: "Estadística Computacional I. Grado en Estadística Departamento de Estadística e Investigación Operativa"
+author: "Marta Venegas Pardo"
+output:
+    pdf_document: 
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Ejercicio 1
+1. Responder a los siguientes apartados:
+
+```{r}
+library(randtoolbox)
+```
+
+
+
+## Generar secuencias de tamaño 500 según los generadores de Mersenne-Twister, Congruencia lineal, “Knuth-TAOCP-2002” y una secuencia determinista.
+
+### Generar de congruencia lineal y algunos contrastes
+```{r}
+library(tseries) # Para contrastes de independencia
+```
+
+
+```{r}
+n<-500
+set.seed(1)
+(head (xmt<- runif(n) , 10 )) #Mersenne-Twister
+```
+
+
+```{r}
+(head (xcl<- congruRand(n),10)) #Generador de congruencia lineal
+```
+
+
+```{r}
+(head(xta<-knuthTAOCP(n),10)) #Knuth-TAOCP-2002
+```
+
+
+```{r}
+(head(xdet<- ((1:n)-0.5)/n,10))
+```
+
+
+
+## Dibujar gráficos de líneas e histogramas para las cuatro secuencias. 
+
+### Gráficos de líneas con plot
+
+```{r}
+par(mfrow=c(2,2))
+plot(xmt,type="l",main="Mersenne-Twister")
+plot(xcl,type="l",main="Congruencia lineal")
+plot(xta,type="l",main="Knuth-TAOCP-2002")
+plot(xdet,type="l",main="Sec.Determinista")
+```
+
+
+### Histogramas con hist
+
+```{r}
+par(mfrow=c(2,2))
+hist(xmt,br=20,main="Mersenne-Twister")
+hist(xcl,br=20,main="Congruencia lineal")
+hist(xta,br=20,main="Knuth-TAOCP-2002")
+hist(xdet,br=20,main="Sec.Determinista")
+
+par(mfrow=c(1,1))
+```
+
+
+## Aplicar contrastes de aleatoriedad sobre las cuatro secuencias.
+
+```{r}
+contrastes_aleato<-function(x,titulo) {
+print(titulo)
+ks.test(x, "punif")
+gap.test(x) #Por defecto, l=0, u=0.5
+order.test(x,d=5) #d puede ser 2,3,4,5, pero n debe ser múltiplo de d freq.test(x, 1:4)#Por defecto, secuencia 1:15
+serial.test(x,d=5) #n debe ser múltiplo de d (t=2)
+poker.test(x)
+print(runs.test(factor(x>0.5)))
+acf(x,main=titulo)
+}
+```
+
+
+### Mersenne-Twister
+
+```{r}
+contrastes_aleato(xmt,"Mersenne-Twister")
+```
+
+
+### Congruencia lineal
+```{r}
+contrastes_aleato(xmt,"Congruencia Lineal")
+```
+
+### Knuth-TAOCP-2002
+
+```{r}
+contrastes_aleato(xta,"Knuth-TAOCP-2002")
+```
+
+### Determinista
+
+```{r}
+contrastes_aleato(xdet,"Determinista")
+```
+
+
+
+### Test con generadores (no secuencias)
+
+```{r}
+coll.test(runif,2^7,2^10)
+```
+
+```{r}
+#m=2^10 secuencias de tamaño n=2^7 
+##por defecto tdim=2 
+coll.test(congruRand,2^7,2^10)
+```
+```{r}
+coll.test(knuthTAOCP,2^7,2^10)
+```
+
+
+# Ejercicio 2
+
+2. Comparar empíricamente los rendimientos de los siguientes generadores de números aleatorios en (0,1), Mersenne-Twister, Congruencia Lineal, K2nuth-TAOCP-2002,2 además de un generador de números determinista, según los resultados del test de Kolmogorov-Smirnov y el test de huecos.
+
+Utilizar 1000 muestras de tamaño 100 y analizar de forma numérica y gráfica los resultados.
+
+
+```{r}
+library(randtoolbox)
+M<-1000
+n<-100
+pvaloresKS<- matrix(NA,M,4)
+pvaloresGap<- matrix(NA,M,4)
+colnames(pvaloresKS)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
+colnames(pvaloresGap)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
+
+for (i in 1:M) {
+if (i%%50==0) {
+cat("Muestra ",i,"de ",M,"\n")
+}
+xmt<- runif(n) #Mersenne-Twister
+xcl<- congruRand(n) #Generador de congruencia lineal
+xta<-knuthTAOCP(n) #Knuth-TAOCP-2002
+xdet<- ((1:n)-0.5)/n #Secuencia determinista
+pvaloresKS[i,]<- c(ks.test(xmt, "punif")$p.value,
+                   ks.test(xcl, "punif")$p.value, 
+                   ks.test(xta, "punif")$p.value,
+                   ks.test(xdet, "punif")$p.value)
+pvaloresGap[i,]<- c(gap.test(xmt,echo=FALSE)$p.value,
+                    gap.test(xcl,echo=FALSE)$p.value,
+                    gap.test(xta,echo=FALSE)$p.value,
+                    gap.test(xdet,echo=FALSE)$p.value)
+}
+```
+
+
+
+# Ejercicio 3
+
+3. Ilustrar el Teorema Central del Límite con muestras de una ley Geométrica con parámetro 0.1 para tamaños muestrales 3, 10, 25, 50 y número de muestras 5000.
+
+# Ejercicio 4
+
+
+4. Ilustrar el concepto de intervalo de confianza mediante 100 muestras de tamaño 10 de una ley N(0,1), siendo la media poblacional el parámetro de interés.
+
+
+# Ejercicio 5
+
+5. Escribir y probar una función R para generar muestras de una Weibull:
+αα
+f(t)=λα(λt)α−1 e−(λt) , F(t)=1−e−(λt) , λ>0,α>0
+i) Generar muestras de tamaño 200 para las configuraciones (α = 0.5,λ = 1), (α = 1,λ = 1),
+(α = 2, λ = 1) y (α = 2, λ = 3); α es el parámetro de forma, λ el de escala.
+ii) Dibujar los histogramas.
+iii) Representar las funciones de distribución empírica y superponer las funciones de distribución teóricas.
+iv) Realizar contrastes de bondad de ajuste mediante la librería fitdistrplus de R.
+
+# Ejercicio 6
+
+6. Leer
+i) Estimar la densidad por el método del núcleo.
+el fichero datos en “Pesos.RData”, y a continuación:
+ii) Escribir una función para generar valores según dicha densidad estimada.
+iii) Comparar las distribuciones de una muestra generada de tamaño 200 y el conjunto de datos original.
+
+# Ejercicio 7
+
+7. Diseñar una función para generar realizaciones de una ley Geométrica simulando el proceso de conteo del número de fracasos antes del primer éxito en la repetición de ensayos Bernouilli. Probar la función y analizar los resultados.
