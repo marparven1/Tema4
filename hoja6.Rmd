@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(randtoolbox)
 ```
 
-
+Tiene muchas funciones relacionadas con el tema.
 
 ## Generar secuencias de tamaño 500 según los generadores de Mersenne-Twister, Congruencia lineal, “Knuth-TAOCP-2002” y una secuencia determinista.
 
@@ -105,10 +105,14 @@ contrastes_aleato(xmt,"Mersenne-Twister")
 ```
 
 
+No se sale mucho de las líneas, para entender las autocorreaciones.
+
 ### Congruencia lineal
 ```{r}
 contrastes_aleato(xmt,"Congruencia Lineal")
 ```
+
+Los p-valores no están tan al límite como alguno de los anteriores.
 
 ### Knuth-TAOCP-2002
 
@@ -125,10 +129,14 @@ contrastes_aleato(xdet,"Determinista")
 
 
 ### Test con generadores (no secuencias)
+Le pasamos la función generadora y hará un estudio.
 
 ```{r}
 coll.test(runif,2^7,2^10)
 ```
+
+p-valor alto, no rechazo.
+
 
 ```{r}
 #m=2^10 secuencias de tamaño n=2^7 
@@ -142,7 +150,7 @@ coll.test(knuthTAOCP,2^7,2^10)
 
 # Ejercicio 2
 
-2. Comparar empíricamente los rendimientos de los siguientes generadores de números aleatorios en (0,1), Mersenne-Twister, Congruencia Lineal, K2nuth-TAOCP-2002,2 además de un generador de números determinista, según los resultados del test de Kolmogorov-Smirnov y el test de huecos.
+Comparar empíricamente los rendimientos de los siguientes generadores de números aleatorios en (0,1), Mersenne-Twister, Congruencia Lineal, K2nuth-TAOCP-2002,2 además de un generador de números determinista, según los resultados del test de Kolmogorov-Smirnov y el test de huecos.
 
 Utilizar 1000 muestras de tamaño 100 y analizar de forma numérica y gráfica los resultados.
 
@@ -175,16 +183,144 @@ pvaloresGap[i,]<- c(gap.test(xmt,echo=FALSE)$p.value,
 }
 ```
 
+```{r}
+head(pvaloresKS,10)
+```
 
 
-# Ejercicio 3
+```{r}
+head(pvaloresGap,10)
+```
+
+```{r}
+#Ejercicio: dibujar en una sola pantalla los M p-valores KS y Gap para los #cuatro generadores
+```
+
+
+
+```{r}
+ par(mfrow=c(2,2)) 
+for (i in 1:4)
+{
+plot(pvaloresKS[,i],type="l",
+     main=colnames(pvaloresKS)[i], 
+     xlab="Muestra",ylab="p-valor",
+     col="red",lwd=2,ylim=c(0,1))
+lines(pvaloresGap[,i], col="blue",lwd=2) 
+}
+legend("center",col=c("red","blue"),lty=1,
+       lwd=2,legend=c("KS","Gap"))
+```
+```{r}
+par(mfrow=c(1,1))
+```
+
+
+
+## Estimar P[p<alfa]
+
+```{r}
+alfa<- 0.05
+rendim<- matrix(NA,4,2)
+colnames(rendim)<- c("KS","Gap")
+rownames(rendim)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
+for (i in 1:4)
+rendim[i,]<-c(mean(pvaloresKS[,i]<=alfa), 
+              mean(pvaloresGap[,i]<=alfa)) 
+#Ejercicio: completar
+rendim
+```
+
+
+```{r}
+plot(rendim,type="n", 
+     main=expression(hat(P)(pv<=alpha)))
+text(rendim,label=rownames(rendim),cex=0.7) 
+grid()
+```
+
+### Cuántas veces es mayor un pv que el otro
+
+```{r}
+for (i in 1:4) 
+  cat(colnames(pvaloresKS)[i],mean(pvaloresKS[,i]>pvaloresGap[,i]),"\n")
+```
+
+
+# Ejercicio 3 
+
+## Teorema central del límite
 
 3. Ilustrar el Teorema Central del Límite con muestras de una ley Geométrica con parámetro 0.1 para tamaños muestrales 3, 10, 25, 50 y número de muestras 5000.
 
+```{r}
+M<-5000 #Núm. de muestras
+p<-0.1
+vn<-c(3,10,25,50) #Tamaños de cada muestra 
+paranti<- par(no.readonly=T)
+par(mfrow=c(2,2))
+for (n in vn) #Ejercicio: completar
+{ x<- matrix(rgeom(M*n,p), # Cuantas genero (5000*3), con parametro p=0.1
+             nrow=M,ncol=n) 
+  medias<- rowMeans(x) 
+  hist(medias,freq=FALSE, col="blue",
+     main=paste("n =",n),
+     ylab=expression(f[i] /a[i]))
+}
+```
+
+```{r}
+par(paranti)
+```
+
+
 # Ejercicio 4
 
+## Intervalo de confianza con una normal
 
 4. Ilustrar el concepto de intervalo de confianza mediante 100 muestras de tamaño 10 de una ley N(0,1), siendo la media poblacional el parámetro de interés.
+
+```{r}
+n<-10 #Tamaño muestral 
+M<-100 #M muestras 
+alfa<-0.05
+media<-0
+desvtip<-1
+muestras<-matrix(rnorm(M*n,mean=media,sd=desvtip),
+                 nrow=M,ncol=n,byrow=TRUE)
+```
+
+
+```{r}
+pv<-array(0,M) #M pvalores 
+exinf<-numeric(M) 
+exsup<-numeric(M)
+```
+
+
+
+```{r}
+for (i in 1:M)
+{ #Ejercicio: completar
+  test<-t.test(muestras[i,],conf.level=1-alfa) 
+  exinf[i]<-test$conf.int[1] 
+  exsup[i]<-test$conf.int[2]
+}
+
+plot(gl(M,n),as.vector(t(muestras)),main=paste("100 I.C. 95% ","n=",n), xlab="Muestra", ylab="x",col="lightblue")
+abline(h=media,col="red",lwd=2,lty=2)
+lines(exinf,col="darkblue",lwd=4)
+lines(exsup,col="darkblue",lwd=4)
+```
+
+```{r}
+cat("Cobertura observada =",
+100* mean((exinf<= media) & (exsup>=media)), "% \n")
+```
+
+```{r}
+cat("Longitud media =", mean(exsup-exinf),"\n")
+```
 
 
 # Ejercicio 5
