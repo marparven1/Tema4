@@ -326,22 +326,313 @@ cat("Longitud media =", mean(exsup-exinf),"\n")
 # Ejercicio 5
 
 5. Escribir y probar una función R para generar muestras de una Weibull:
-αα
-f(t)=λα(λt)α−1 e−(λt) , F(t)=1−e−(λt) , λ>0,α>0
-i) Generar muestras de tamaño 200 para las configuraciones (α = 0.5,λ = 1), (α = 1,λ = 1),
-(α = 2, λ = 1) y (α = 2, λ = 3); α es el parámetro de forma, λ el de escala.
-ii) Dibujar los histogramas.
-iii) Representar las funciones de distribución empírica y superponer las funciones de distribución teóricas.
-iv) Realizar contrastes de bondad de ajuste mediante la librería fitdistrplus de R.
 
-# Ejercicio 6
+\[ f(t) = \lambda \alpha(\lambda t)^{\alpha -1} e ^{- (\lambda t)} \text{ , } \space F(t)=1 - e^{-(\lambda t)^\alpha} \text{ , } \lambda , \alpha >0
+\]
 
-6. Leer
-i) Estimar la densidad por el método del núcleo.
-el fichero datos en “Pesos.RData”, y a continuación:
-ii) Escribir una función para generar valores según dicha densidad estimada.
-iii) Comparar las distribuciones de una muestra generada de tamaño 200 y el conjunto de datos original.
+## Generar muestras de tamaño 200 para las configuraciones siguientes, donde:
+
+- $\lambda$ es el parámetro de escala
+- $\alpha$ es el parámetro de forma
+
+- $\alpha=0.5 \text{ , } \lambda = 1$
+- $\alpha=1 \text{ , } \lambda = 1$
+- $\alpha=2 \text{ , } \lambda = 1$
+- $\alpha=2 \text{ , } \lambda = 3$
+
+
+
+```{r}
+generaweib<- function(n,alfa,landa){
+  U<- runif(n) 
+  ((-log(1-U))^(1/alfa))/landa
+}
+#i)
+n<-200
+set.seed(129871)
+x1<- generaweib(n,0.5,1) 
+x2<- generaweib(n,1,1) 
+x3<- generaweib(n,2,1) 
+x4<- generaweib(n,2,3)
+```
+
+
+## Dibujar los histogramas
+
+```{r}
+tit1<-paste("alpha=",0.5,"lambda=",1) 
+tit2<-paste("alpha=",1,"lambda=",1) 
+tit3<-paste("alpha=",2,"lambda=",1) 
+tit4<-paste("alpha=",2,"lambda=",3)
+
+par(mfrow=c(2,2))
+hist(x1,main=tit1,br=20,prob=TRUE)
+hist(x2,main=tit2,br=20,prob=TRUE)
+hist(x3,main=tit3,br=20,prob=TRUE)
+hist(x4,main=tit4,br=20,prob=TRUE)
+```
+
+```{r}
+par(mfrow=c(1,1))
+```
+
+## Representar las funciones de distribución empírica y superponer las teóricas
+
+
+```{r}
+par(mfrow=c(2,2))
+plot(ecdf(x1),main=tit1,do.points=FALSE,verticals=TRUE)
+curve(pweibull(x,0.5,1),min(x1),max(x1),1000,add=TRUE,col="red")
+
+# ecdf: EMpirical cumulative distribution Function
+
+plot(ecdf(x2),main=tit2,do.points=FALSE,verticals=TRUE)
+curve(pweibull(x,1,1),min(x2),max(x2),1000,add=TRUE,col="red")
+
+plot(ecdf(x3),main=tit3,do.points=FALSE,verticals=TRUE)
+curve(pweibull(x,2,1),min(x3),max(x3),1000,add=TRUE,col="red")
+
+plot(ecdf(x4),main=tit4,do.points=FALSE,verticals=TRUE)
+curve(pweibull(x,2,1/3),min(x4),max(x4),1000,add=TRUE,col="red")
+```
+```{r}
+par(mfrow=c(1,1))
+```
+
+
+
+
+
+## Contrastes de bondad de ajuste (fitdistrplus)
+
+SIGUE UNA WEIBULL FRENTE A NO. ESCRIBIR.
+
+Debemos estimar los parámetros por el método de la máxima verosimilitud.
+
+```{r message=FALSE}
+library(fitdistrplus)
+```
+
+```{r}
+print(mv1<-mledist(x1,"weibull"))
+```
+
+### Test de Kolmogorov-Smirnov de bondad de ajuste
+
+Es el mejor.
+
+
+```{r}
+ks.test(x1,"pweibull",mv1$estimate[1], 1/mv1$estimate[2]) 
+#R usa 1/landa
+```
+Cuidado al dar los parámetros.
+
+Conclusión, p-valor mayor que alpha, no tenemos evidencias para negar que la muestra x1 siga una distribución pweibull.
+
+
+Otra opción: ajustar los datos mediante fitdist y luego aplicar gofstat: Aquí lo que se muestra es el p-valor del test chi-cuadrado de bondad de ajuste.
+
+```{r}
+fitweib1 <- fitdist(x1, "weibull") 
+summary(fitweib1)
+```
+
+Obtenemos los estimadores, que coinciden con los anteriores.
+También calcula el log de la verosimilitud y calcula los criterios AIC y BIC.
+
+### MEDIANTE el test Chi-Cuadrado
+
+```{r}
+gofstat(fitweib1)$chisqpvalue
+```
+
+Acepto H0, no encontramos evidencias de que no la sigue.
+
+```{r}
+fitweib2 <- fitdist(x2, "weibull") 
+summary(fitweib2)
+```
+
+```{r}
+gofstat(fitweib2)$chisqpvalue
+```
+
+
+```{r}
+fitweib3 <- fitdist(x3, "weibull")
+summary(fitweib3)
+```
+
+
+```{r}
+gofstat(fitweib3)$chisqpvalue
+```
+
+
+
+```{r}
+fitweib4 <- fitdist(x4, "weibull")
+summary(fitweib4)
+```
+
+
+
+```{r}
+gofstat(fitweib4)$chisqpvalue
+```
+
+
+# Ejercicio 6 "Pesos.RData"
+
+Leer el fichero datos en “Pesos.RData”, y a continuación:
+
+## Estimar la densidad por el método del núcleo.
+
+```{r}
+load("datos/Pesos.RData")
+hist(datos,
+     br=30,
+     prob=TRUE,
+     main="Histograma y estimación de la densidad",
+     ylab = expression(hat(f)(x)),xlab="x")
+lines(density(datos,bw="SJ"),col="blue",lwd=2) # Estimación por el método del núcleo con density
+## SJ es el método que mejor se porta
+```
+
+
+Vamos a crear una muestra de datos a partir de la función de densidad estimada, serán estimaciones.
+
+```{r}
+estimnuc<- density(datos,bw="SJ",n=5000) #Para tener más puntos 
+# Devuelve los puntos sobre los que ha hecho las estiamciones
+
+distrib<-data.frame(x=estimnuc$x,
+                    F=cumsum(estimnuc$y)/sum(estimnuc$y))
+# Aquí tenemos una tabla de valores de la función de distribución, no de densidad
+
+plot(distrib,type="l") # Función de distribución 
+```
+
+
+## Escribir una función para generar valores según dicha densidad estimada.
+
+```{r}
+generax<- function(n,distrib) {
+  U<-runif(n)
+  sapply(U, function(u) min(distrib$x[distrib$F>=u]) ) }
+## Mínimo x que supera al valor que busco en la FDD
+## Función inversa de la función tabulada
+## Sapply: acada elemento del vector que le paso, le aplica la función
+generax(10,distrib)
+```
+
+
+Simulación de valores:
+
+```{r}
+xsimu<- generax(200,distrib)
+```
+Lo dibujo
+
+
+```{r}
+qqplot(datos,xsimu)
+```
+
+
+
+```{r}
+summary(datos)
+```
+
+```{r}
+summary(xsimu)
+```
+
+Vemos que la mediana con el segundo método es mayor, al igual que la media. Sin embardo, estas evidencias no son significativas para rechazar el test que realizamos a continuación:
+
+## Comparar las distribuciones de una muestra generada de tamaño 200 y el conjunto de datos original.
+
+```{r}
+ks.test(datos,xsimu)
+```
+```{r}
+plot(ecdf(datos),main="",do.points=FALSE, verticals=TRUE,col="red")
+lines(ecdf(xsimu),do.points=FALSE, verticals=TRUE,col="blue")
+```
+
+Aquí vemos porque K-S no rechaza.
 
 # Ejercicio 7
 
 7. Diseñar una función para generar realizaciones de una ley Geométrica simulando el proceso de conteo del número de fracasos antes del primer éxito en la repetición de ensayos Bernouilli. Probar la función y analizar los resultados.
+
+```{r}
+#para generar muestra de tamaño n de Ge(p)
+#
+Geom<- function(n,p) {
+ #Inicializaciones
+X<- integer(n) 
+#algoritmo
+for (i in 1:n) {
+s<- -1
+repeat
+{
+s<- s+1
+U<- runif(1)
+if (U <= p) break
+}
+X[i]<- s
+}
+X
+}
+```
+
+
+```{r}
+p<- 0.3
+n<- 2000
+set.seed(12345)
+x<- Geom(n,p)
+(tabla<-table(x))
+```
+
+
+```{r}
+vx<- 1:max(x)
+plot(prop.table(tabla),
+     type="h",
+     ylab="",
+     main=paste("p=",p,"n=",n))
+lines(vx,dgeom(vx,p),type="h",col="red",lty=2)
+legend("topright",
+       lty=1:2,
+       col=c("black","red"),
+       legend=c("Frec.relativa","Prob.Geom"))
+grid()
+```
+
+No poner valores de p muy pequeños.
+
+
+
+```{r}
+plot(ecdf(x),
+     do.points=FALSE,
+     verticals=TRUE, 
+     ylab="",
+     main=paste("p=",p,"n=",n))
+
+curve(pgeom(x,p),
+      add=TRUE,
+      col="red",
+      lty=2) 
+legend("center",
+       lty=1:2,
+       col=c("black","red"),
+       legend=expression(F[n](x),F[Geom](x)))
+grid()
+```
+
+
