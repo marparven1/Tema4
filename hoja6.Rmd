@@ -3,7 +3,7 @@ title: "Hoja 6 de problemas y prácticas con R"
 subtitle: "Estadística Computacional I. Grado en Estadística Departamento de Estadística e Investigación Operativa"
 author: "Marta Venegas Pardo"
 output:
-    pdf_document: 
+  pdf_document: 
     toc: yes
     toc_depth: 3
     number_sections: yes
