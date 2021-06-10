@@ -1,6 +1,6 @@
 ---
 title: "Hoja 6 de problemas y prácticas con R"
-subtitle: "Estadística Computacional I. Grado en Estadística Departamento de Estadística e Investigación Operativa"
+subtitle: "Tema 4: Generación de números aleatorios"
 author: "Marta Venegas Pardo"
 output:
   pdf_document: 
@@ -16,7 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-# Ejercicio 1
+# Ejercicio 1 Secuencias
+
 1. Responder a los siguientes apartados:
 
 ```{r}
@@ -89,7 +90,8 @@ contrastes_aleato<-function(x,titulo) {
 print(titulo)
 ks.test(x, "punif")
 gap.test(x) #Por defecto, l=0, u=0.5
-order.test(x,d=5) #d puede ser 2,3,4,5, pero n debe ser múltiplo de d freq.test(x, 1:4)#Por defecto, secuencia 1:15
+order.test(x,d=5) #d puede ser 2,3,4,5, pero n debe ser múltiplo de d freq.test(x, 1:4)
+#Por defecto, secuencia 1:15
 serial.test(x,d=5) #n debe ser múltiplo de d (t=2)
 poker.test(x)
 print(runs.test(factor(x>0.5)))
@@ -148,7 +150,7 @@ coll.test(knuthTAOCP,2^7,2^10)
 ```
 
 
-# Ejercicio 2
+# Ejercicio 2 Rendimientos de generadores de números aleatorios
 
 Comparar empíricamente los rendimientos de los siguientes generadores de números aleatorios en (0,1), Mersenne-Twister, Congruencia Lineal, K2nuth-TAOCP-2002,2 además de un generador de números determinista, según los resultados del test de Kolmogorov-Smirnov y el test de huecos.
 
@@ -161,8 +163,10 @@ M<-1000
 n<-100
 pvaloresKS<- matrix(NA,M,4)
 pvaloresGap<- matrix(NA,M,4)
-colnames(pvaloresKS)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
-colnames(pvaloresGap)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
+colnames(pvaloresKS)<- c("Mersenne-Twister","Congruencia Lineal", 
+                         "Knuth-TAOCP-2002","Determinista")
+colnames(pvaloresGap)<- c("Mersenne-Twister","Congruencia Lineal",
+                          "Knuth-TAOCP-2002","Determinista")
 
 for (i in 1:M) {
 if (i%%50==0) {
@@ -192,9 +196,6 @@ head(pvaloresKS,10)
 head(pvaloresGap,10)
 ```
 
-```{r}
-#Ejercicio: dibujar en una sola pantalla los M p-valores KS y Gap para los #cuatro generadores
-```
 
 
 
@@ -223,11 +224,11 @@ par(mfrow=c(1,1))
 alfa<- 0.05
 rendim<- matrix(NA,4,2)
 colnames(rendim)<- c("KS","Gap")
-rownames(rendim)<- c("Mersenne-Twister","Congruencia Lineal", "Knuth-TAOCP-2002","Determinista")
+rownames(rendim)<- c("Mersenne-Twister","Congruencia Lineal", 
+                     "Knuth-TAOCP-2002","Determinista")
 for (i in 1:4)
 rendim[i,]<-c(mean(pvaloresKS[,i]<=alfa), 
               mean(pvaloresGap[,i]<=alfa)) 
-#Ejercicio: completar
 rendim
 ```
 
@@ -239,7 +240,7 @@ text(rendim,label=rownames(rendim),cex=0.7)
 grid()
 ```
 
-### Cuántas veces es mayor un pv que el otro
+## Cuántas veces es mayor un pv que el otro
 
 ```{r}
 for (i in 1:4) 
@@ -247,9 +248,8 @@ for (i in 1:4)
 ```
 
 
-# Ejercicio 3 
+# Ejercicio 3 Teorema central del límite
 
-## Teorema central del límite
 
 3. Ilustrar el Teorema Central del Límite con muestras de una ley Geométrica con parámetro 0.1 para tamaños muestrales 3, 10, 25, 50 y número de muestras 5000.
 
@@ -274,9 +274,8 @@ par(paranti)
 ```
 
 
-# Ejercicio 4
+# Ejercicio 4 Intervalo de confianza con una normal
 
-## Intervalo de confianza con una normal
 
 4. Ilustrar el concepto de intervalo de confianza mediante 100 muestras de tamaño 10 de una ley N(0,1), siendo la media poblacional el parámetro de interés.
 
@@ -307,7 +306,8 @@ for (i in 1:M)
   exsup[i]<-test$conf.int[2]
 }
 
-plot(gl(M,n),as.vector(t(muestras)),main=paste("100 I.C. 95% ","n=",n), xlab="Muestra", ylab="x",col="lightblue")
+plot(gl(M,n),as.vector(t(muestras)),main=paste("100 I.C. 95% ","n=",n),
+     xlab="Muestra", ylab="x",col="lightblue")
 abline(h=media,col="red",lwd=2,lty=2)
 lines(exinf,col="darkblue",lwd=4)
 lines(exsup,col="darkblue",lwd=4)
@@ -323,7 +323,7 @@ cat("Longitud media =", mean(exsup-exinf),"\n")
 ```
 
 
-# Ejercicio 5
+# Ejercicio 5 Distribución Weibull
 
 5. Escribir y probar una función R para generar muestras de una Weibull:
 
@@ -405,7 +405,7 @@ par(mfrow=c(1,1))
 
 ## Contrastes de bondad de ajuste (fitdistrplus)
 
-SIGUE UNA WEIBULL FRENTE A NO. ESCRIBIR.
+REALIZAMOS EL CONTRASTE: SIGUE UNA WEIBULL FRENTE A NO LO SIGUE
 
 Debemos estimar los parámetros por el método de la máxima verosimilitud.
 
@@ -426,6 +426,7 @@ Es el mejor.
 ks.test(x1,"pweibull",mv1$estimate[1], 1/mv1$estimate[2]) 
 #R usa 1/landa
 ```
+
 Cuidado al dar los parámetros.
 
 Conclusión, p-valor mayor que alpha, no tenemos evidencias para negar que la muestra x1 siga una distribución pweibull.
@@ -441,7 +442,7 @@ summary(fitweib1)
 Obtenemos los estimadores, que coinciden con los anteriores.
 También calcula el log de la verosimilitud y calcula los criterios AIC y BIC.
 
-### MEDIANTE el test Chi-Cuadrado
+### Test Chi-Cuadrado
 
 ```{r}
 gofstat(fitweib1)$chisqpvalue
@@ -564,7 +565,7 @@ lines(ecdf(xsimu),do.points=FALSE, verticals=TRUE,col="blue")
 
 Aquí vemos porque K-S no rechaza.
 
-# Ejercicio 7
+# Ejercicio 7 Función para Ley Geométrica
 
 7. Diseñar una función para generar realizaciones de una ley Geométrica simulando el proceso de conteo del número de fracasos antes del primer éxito en la repetición de ensayos Bernouilli. Probar la función y analizar los resultados.
 
